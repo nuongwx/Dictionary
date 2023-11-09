@@ -2,7 +2,7 @@ import java.io.*;
 import java.util.*;
 
 public class Dictionary extends Trie implements Serializable {
-    HashMap<String, List<TrieNode>> invertedIndex;
+    HashMap<String, HashSet<TrieNode>> invertedIndex;
 
     List<TrieNode> history;
     @Serial
@@ -29,7 +29,7 @@ public class Dictionary extends Trie implements Serializable {
                         formatted.append("`").append(String.join(" ", words));
                         for (String w : words) {
                             if (!invertedIndex.containsKey(w)) {
-                                invertedIndex.put(w, new ArrayList<>());
+                                invertedIndex.put(w, new HashSet<>());
                             }
                             invertedIndex.get(w).add(node);
                         }
@@ -57,7 +57,7 @@ public class Dictionary extends Trie implements Serializable {
                 String[] words = w.replaceAll("[^a-zA-Z\\d']", " ").toLowerCase().split("\\s+");
                 for (String word1 : words) {
                     if (!invertedIndex.containsKey(word1)) {
-                        invertedIndex.put(word1, new ArrayList<>());
+                        invertedIndex.put(word1, new HashSet<>());
                     }
                     invertedIndex.get(word1).add(node);
                 }
@@ -80,7 +80,7 @@ public class Dictionary extends Trie implements Serializable {
         return super.delete(node);
     }
 
-    public TrieNode edit(TrieNode node, String newWord, String[] newDefinition) {
+    public TrieNode edit(TrieNode node, String newWord, List<String> newDefinition, boolean merge) {
         if (node == null) {
             return null;
         }
@@ -91,7 +91,17 @@ public class Dictionary extends Trie implements Serializable {
                 System.out.println(w);
             }
         }
-        return insert(newWord, newDefinition);
+        TrieNode newNode = super.edit(node, newWord, newDefinition, merge);
+        for (String w : newDefinition) {
+            String[] words = w.replaceAll("[^a-zA-Z\\d']", " ").toLowerCase().split("\\s+");
+            for (String word1 : words) {
+                if (!invertedIndex.containsKey(word1)) {
+                    invertedIndex.put(word1, new HashSet<>());
+                }
+                invertedIndex.get(word1).add(newNode);
+            }
+        }
+        return newNode;
     }
 
     private List<TrieNode> listAll() {
@@ -104,9 +114,11 @@ public class Dictionary extends Trie implements Serializable {
             return getFromPrefix("");
         }
         for (String word : keyWords.replaceAll("[^a-zA-Z\\d']", " ").toLowerCase().split("\\s+")) {
-            List<TrieNode> node = invertedIndex.get(word);
-            if (node == null) {
-                continue;
+            List<TrieNode> node = new ArrayList<>();
+            try {
+                node = invertedIndex.get(word).stream().toList();
+            } catch (NullPointerException e) {
+//                xd
             }
             for (TrieNode n : node) {
                 if (!nodes.containsKey(n)) {
@@ -124,7 +136,7 @@ public class Dictionary extends Trie implements Serializable {
         Random rand = new Random();
         List<String> keys = new ArrayList<>(invertedIndex.keySet());
         String randomKey = keys.get(rand.nextInt(keys.size()));
-        List<TrieNode> nodes = invertedIndex.get(randomKey);
+        List<TrieNode> nodes = invertedIndex.get(randomKey).stream().toList();
         return nodes.get(rand.nextInt(nodes.size()));
     }
 
