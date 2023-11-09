@@ -1,23 +1,22 @@
 import javax.swing.*;
-import javax.swing.Timer;
+import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.MouseEvent;
 import java.util.*;
 import java.util.List;
 
 public class GUI {
 
     public static Dictionary dict;
-    static JFrame wordSearchFrame;
     static JFrame dictionaryFrame;
     static JSplitPane splitPane;
 
     static JPanel detailsFrame;
     static JFrame editorFrame;
 
-    static JFrame historyFrame;
 
     public static JMenuBar createMenuBar() {
         JMenuBar menuBar = new JMenuBar();
@@ -54,18 +53,17 @@ public class GUI {
 
     private static void createAndShowGUI() {
         JFrame.setDefaultLookAndFeelDecorated(true);
-//        wordSearchFrame = searchPanel();
-//        editorFrame = new JFrame("Editor");
-//        historyFrame = new JFrame("History");
-//        wordSearchFrame.setVisible(true);
+
         splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, searchPanel(), detailsFrame);
         splitPane.setDividerLocation(400);
+        splitPane.setResizeWeight(0.5);
 
         dictionaryFrame = new JFrame("SlangDict");
         dictionaryFrame.setJMenuBar(createMenuBar());
         dictionaryFrame.setContentPane(motd());
         dictionaryFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        dictionaryFrame.setSize(800, 600);
+//        dictionaryFrame.setSize(800, 600);
+        dictionaryFrame.setMinimumSize(new Dimension(640, 360));
         dictionaryFrame.setVisible(true);
 
         motd();
@@ -74,24 +72,8 @@ public class GUI {
 
     }
 
-    public static void showHistory() {
-        historyFrame = new JFrame("History");
 
-        JPanel wrapperPanel = new JPanel();
-        wrapperPanel.setLayout(new BoxLayout(wrapperPanel, BoxLayout.Y_AXIS));
-        JList<TrieNode> list = new JList<>(dict.history.toArray(new TrieNode[0]));
-
-        JScrollPane scrollPane = new JScrollPane(list);
-        wrapperPanel.add(scrollPane);
-
-        historyFrame.repaint();
-        historyFrame.add(wrapperPanel);
-        historyFrame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-        historyFrame.pack();
-        historyFrame.setVisible(true);
-    }
-
-    private static JPanel searchPanel() {
+    private static JSplitPane searchPanel() {
 //        JSplitPane frame = new JSplitPane("BoxLayoutDemo");
         JPanel frame = new JPanel();
         frame.setLayout(new BorderLayout());
@@ -100,23 +82,21 @@ public class GUI {
         topPanel.setLayout(new BoxLayout(topPanel, BoxLayout.X_AXIS));
         JTextField textField = new JTextField();
         textField.setColumns(20);
-        JButton historyButton = new JButton("History");
-        JComboBox comboBox = new JComboBox(new String[]{"Word", "Definition"});
+        textField.setMinimumSize(new Dimension(100, 20));
+        JButton addButton = new JButton("➕");
+        JComboBox<String> comboBox = new JComboBox<>(new String[]{"Word", "Definition"});
         topPanel.add(textField);
         topPanel.add(comboBox);
-        topPanel.add(historyButton);
+        topPanel.add(addButton);
         topPanel.setAlignmentX(Component.CENTER_ALIGNMENT);
         frame.add(topPanel, BorderLayout.PAGE_START);
 
-        historyButton.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                showHistory();
-            }
-        });
-
         JPanel centrePanel = new JPanel();
         centrePanel.setLayout(new BoxLayout(centrePanel, BoxLayout.Y_AXIS));
-        JList<TrieNode> list = new JList<>(dict.getFromPrefix("").toArray(new TrieNode[0]));
+
+        DefaultListModel<TrieNode> listModel = new DefaultListModel<>();
+        listModel.addAll(dict.getFromPrefix(""));
+        JList<TrieNode> list = new JList<>(listModel);
         list.setCellRenderer(new ListRenderer());
         JScrollPane scrollPane = new JScrollPane(list);
         centrePanel.add(scrollPane);
@@ -124,13 +104,19 @@ public class GUI {
 
         JPanel buttonPane = new JPanel();
         buttonPane.setLayout(new BoxLayout(buttonPane, BoxLayout.X_AXIS));
-        JButton okButton = new JButton("OK");
-        JButton cancelButton = new JButton("Cancel");
-        buttonPane.add(okButton);
-        buttonPane.add(cancelButton);
         buttonPane.setAlignmentX(Component.CENTER_ALIGNMENT);
 
-        okButton.addActionListener(new java.awt.event.ActionListener() {
+        frame.add(buttonPane, BorderLayout.PAGE_END);
+        frame.revalidate();
+        frame.repaint();
+
+        JPanel historyPane = new JPanel();
+        historyPane.setLayout(new BoxLayout(historyPane, BoxLayout.Y_AXIS));
+
+        JSplitPane splitPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT, frame, historyPane);
+        splitPane.setResizeWeight(0.5);
+
+        addButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 TrieNode node = new TrieNode();
                 JFrame editorFrame = editorFrame(node);
@@ -142,39 +128,61 @@ public class GUI {
 
         comboBox.addItemListener(new java.awt.event.ItemListener() {
             public void itemStateChanged(java.awt.event.ItemEvent evt) {
-                list.setListData(getSearchResult(comboBox, textField, 0));
+                listModel.clear();
+                listModel.addAll(List.of(getSearchResult(comboBox, textField)));
             }
         });
+
         textField.addKeyListener(new java.awt.event.KeyAdapter() {
             public void keyReleased(java.awt.event.KeyEvent evt) {
-                list.setListData(getSearchResult(comboBox, textField, 150));
+                listModel.clear();
+                listModel.addAll(List.of(getSearchResult(comboBox, textField)));
+
             }
         });
         list.addMouseListener(new java.awt.event.MouseAdapter() {
+            @Override
+            public void mouseReleased(MouseEvent e) {
+                super.mouseReleased(e);
+                TrieNode node = list.getSelectedValue();
+                if (node == null) {
+                    return;
+                } else if (!node.isEndOfWord) {
+                    ((DefaultListModel<TrieNode>) list.getModel()).removeElement(node);
+                    return;
+                }
+                setDetailsFrame(node);
+                if (!dict.history.isEmpty() && dict.history.getFirst() == node) {
+                    return;
+                } else {
+                    dict.history.addFirst(node);
+                }
+
+                historyPane.removeAll();
+                JList<TrieNode> histList = new JList<>(dict.history.toArray(new TrieNode[0]));
+                JScrollPane histScrollPane = new JScrollPane(histList);
+                historyPane.add(histScrollPane);
+                historyPane.revalidate();
+                historyPane.repaint();
+
+                splitPane.setDividerLocation(splitPane.getDividerLocation());
+
+            }
+
             public void mouseClicked(java.awt.event.MouseEvent evt) {
-                if (evt.getClickCount() == 3) {
+                if (evt.getClickCount() == 2) {
                     TrieNode node = list.getSelectedValue();
+                    if (!node.isEndOfWord) {
+                        return;
+                    }
                     editorFrame = editorFrame(node);
                     editorFrame.repaint();
                     editorFrame.pack();
                     editorFrame.setVisible(true);
-                } else {
-                    TrieNode node = list.getSelectedValue();
-                    setDetailsFrame(node);
-                    dict.history.add(node);
-//                    detailsFrame.setVisible(true);
-                    System.out.println(node);
                 }
             }
         });
-
-        frame.add(buttonPane, BorderLayout.PAGE_END);
-        frame.revalidate();
-        frame.repaint();
-//        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-//        frame.pack();
-//        frame.setVisible(true);
-        return frame;
+        return splitPane;
     }
 
     private static JPanel setDetailsFrame(TrieNode node) {
@@ -212,19 +220,13 @@ public class GUI {
         return wrapperPanel;
     }
 
-    private static TrieNode[] getSearchResult(JComboBox comboBox, JTextField textField, int delay) {
-        TrieNode[] nodes = new TrieNode[0];
-//        Timer timer = new Timer(delay, new java.awt.event.ActionListener() {
-//            public void actionPerformed(java.awt.event.ActionEvent evt) {
-        if (comboBox.getSelectedItem().toString().equals("Word")) {
+    private static TrieNode[] getSearchResult(JComboBox<String> comboBox, JTextField textField) {
+        TrieNode[] nodes;
+        if (Objects.requireNonNull(comboBox.getSelectedItem()).toString().equals("Word")) {
             nodes = dict.getFromPrefix((textField.getText())).toArray(new TrieNode[0]);
         } else {
             nodes = dict.getFromDefinition((textField.getText())).toArray(new TrieNode[0]);
         }
-//            }
-//        });
-//        timer.setRepeats(false);
-//        timer.start();
         return nodes;
     }
 
@@ -237,7 +239,7 @@ public class GUI {
         JTextField wordField = new JTextField();
         JScrollPane scrollPane = new JScrollPane();
 
-        DefaultTableModel model = new DefaultTableModel(new Object[]{"Definition"}, 0);
+        DefaultTableModel model = new DefaultTableModel(new Object[]{"Definition", ""}, 0);
         JTable definitionField = new JTable(model);
         JButton saveButton = new JButton("Save");
         JButton deleteButton = new JButton("Delete");
@@ -248,8 +250,41 @@ public class GUI {
 
         wordField.setText(node.word);
         for (String definition : node.definitions) {
-            model.addRow(new Object[]{definition});
+            model.addRow(new Object[]{definition, "-"});
         }
+
+
+        // implements the interface https://tips4java.wordpress.com/2009/07/12/table-button-column/
+        // or just override the default thing
+        definitionField.setDefaultRenderer(Object.class, new DefaultTableCellRenderer() {
+            @Override
+            public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+                Component c = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+                if (column == 1) {
+                    return new JButton("✘");
+                }
+                return c;
+            }
+        });
+
+        definitionField.setDefaultEditor(Object.class, new DefaultCellEditor(new JTextField()) {
+            @Override
+            public Component getTableCellEditorComponent(JTable table, Object value, boolean isSelected, int row, int column) {
+                if (column == 1) {
+                    JButton button = new JButton("✘");
+                    button.addActionListener(new java.awt.event.ActionListener() {
+                        public void actionPerformed(java.awt.event.ActionEvent evt) {
+                            // https://stackoverflow.com/a/34158450
+                            definitionField.getCellEditor().stopCellEditing();
+                            model.removeRow(row);
+                        }
+                    });
+                    return button;
+                } else {
+                    return super.getTableCellEditorComponent(table, value, isSelected, row, column);
+                }
+            }
+        });
 
         wordField.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -267,9 +302,25 @@ public class GUI {
 
         saveButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
+                try {
+                    definitionField.getCellEditor().stopCellEditing();
+                } catch (NullPointerException e) {
+                    // do nothing
+                }
                 String word = wordField.getText();
                 if (word.isBlank()) {
                     JOptionPane.showMessageDialog(null, "Word cannot be blank");
+                    return;
+                }
+                ArrayList<String> definitions = new ArrayList<>();
+                for (int i = 0; i < definitionField.getRowCount(); i++) {
+                    definitions.add(definitionField.getValueAt(i, 0).toString().trim());
+                    if (definitions.getLast() == null || definitions.getLast().isBlank()) {
+                        definitions.removeLast();
+                    }
+                }
+                if (definitions.isEmpty()) {
+                    JOptionPane.showMessageDialog(null, "Definition cannot be blank");
                     return;
                 }
                 int merge = 0;
@@ -292,17 +343,7 @@ public class GUI {
                         return;
                     }
                 }
-                ArrayList<String> definitions = new ArrayList<>();
-                for (int i = 0; i < definitionField.getRowCount(); i++) {
-                    definitions.add(definitionField.getValueAt(i, 0).toString().trim());
-                    if (definitions.getLast() == null || definitions.getLast().isBlank()) {
-                        definitions.removeLast();
-                    }
-                }
-                if (definitions.isEmpty()) {
-                    JOptionPane.showMessageDialog(null, "Definition cannot be blank");
-                    return;
-                }
+
                 dict.edit(node, wordField.getText().toUpperCase(), definitions, merge == 0);
             }
         });
@@ -456,8 +497,6 @@ public class GUI {
     }
 
     private static JPanel motd() {
-        JFrame frame = new JFrame();
-
         JPanel panel = new JPanel();
         panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
 
@@ -466,8 +505,6 @@ public class GUI {
         welcomeText.setFont(new Font("Serif", Font.BOLD, 20));
         panel.add(welcomeText);
 
-//        JLabel label = new JLabel(dict.motd().toString());
-//        label.setAlignmentX(Component.CENTER_ALIGNMENT);
         panel.add(setDetailsFrame(dict.motd()));
 
         return panel;
