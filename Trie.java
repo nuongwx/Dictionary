@@ -46,22 +46,22 @@ public class Trie implements Serializable {
     }
 
     // really sketchy
-    public TrieNode edit(TrieNode node, String newWord, List<String> newDefinition, boolean merge) {
-        if (node == null) {
-            return null;
-        }
-        if(merge == false) {
-            TrieNode overwritten = get(newWord);
-            if(overwritten != null) {
-                overwritten.definitions.clear();
-                overwritten.addDefinition(newDefinition);
-            } else {
-                return insert(newWord, newDefinition);
-            }
-        }
-        delete(node);
-        return insert(newWord, newDefinition);
-    }
+//    public TrieNode edit(TrieNode node, String newWord, List<String> newDefinition, boolean merge) {
+//        if (node == null) {
+//            return null;
+//        }
+//        if(merge == false) {
+//            TrieNode overwritten = get(newWord);
+//            if(overwritten != null) {
+//                overwritten.definitions.clear();
+//                overwritten.addDefinition(newDefinition);
+//            } else {
+//                return insert(newWord, newDefinition);
+//            }
+//        }
+//        delete(node);
+//        return insert(newWord, newDefinition);
+//    }
 
 //    public TrieNode edit(TrieNode updatedNode) {
 //        if (updatedNode == null) {

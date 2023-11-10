@@ -13,7 +13,6 @@ public class GUI {
     public static Dictionary dict;
     static JFrame dictionaryFrame;
     static JSplitPane splitPane;
-
     static JPanel detailsFrame;
     static JFrame editorFrame;
 
@@ -41,7 +40,43 @@ public class GUI {
         });
         menuBar.add(tbMenuItem2);
 
+        JToggleButton tbMenuItem3 = new JToggleButton("Manage");
+        tbMenuItem3.setModel(new DefaultButtonModel());
+        tbMenuItem3.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                updateMainFrame(dictManager());
+            }
+        });
+        menuBar.add(tbMenuItem3);
+
         return menuBar;
+    }
+
+    public static JPanel dictManager() {
+        JPanel panel = new JPanel();
+        panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
+
+        JButton addButton = new JButton("Reload");
+        panel.add(addButton);
+        addButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                dict = new Dictionary("slang.txt", true);
+                dictionaryFrame.dispose();
+                createAndShowGUI();
+            }
+        });
+
+        JButton saveButton = new JButton("Save");
+        panel.add(saveButton);
+        saveButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                dict.save();
+            }
+        });
+
+        return panel;
+
     }
 
     public static void updateMainFrame(Container panel) {
@@ -62,19 +97,12 @@ public class GUI {
         dictionaryFrame.setJMenuBar(createMenuBar());
         dictionaryFrame.setContentPane(motd());
         dictionaryFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-//        dictionaryFrame.setSize(800, 600);
         dictionaryFrame.setMinimumSize(new Dimension(640, 360));
         dictionaryFrame.setVisible(true);
-
-        motd();
-        quiz(true);
-
-
     }
 
 
     private static JSplitPane searchPanel() {
-//        JSplitPane frame = new JSplitPane("BoxLayoutDemo");
         JPanel frame = new JPanel();
         frame.setLayout(new BorderLayout());
 
@@ -119,10 +147,7 @@ public class GUI {
         addButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 TrieNode node = new TrieNode();
-                JFrame editorFrame = editorFrame(node);
-                editorFrame.repaint();
-                editorFrame.pack();
-                editorFrame.setVisible(true);
+                editorFrame = editorFrame(node);
             }
         });
 
@@ -176,9 +201,6 @@ public class GUI {
                         return;
                     }
                     editorFrame = editorFrame(node);
-                    editorFrame.repaint();
-                    editorFrame.pack();
-                    editorFrame.setVisible(true);
                 }
             }
         });
@@ -236,15 +258,44 @@ public class GUI {
         JPanel wrapperPanel = new JPanel();
         wrapperPanel.setLayout(new BoxLayout(wrapperPanel, BoxLayout.Y_AXIS));
 
+        JPanel topPanel = new JPanel();
+        topPanel.setLayout(new BoxLayout(topPanel, BoxLayout.Y_AXIS));
+
         JTextField wordField = new JTextField();
         JScrollPane scrollPane = new JScrollPane();
+        scrollPane.setMinimumSize(new Dimension(400, 200));
 
         DefaultTableModel model = new DefaultTableModel(new Object[]{"Definition", ""}, 0);
         JTable definitionField = new JTable(model);
+        definitionField.setFillsViewportHeight(true);
+
+        topPanel.add(wordField);
+        topPanel.add(scrollPane);
+        wrapperPanel.add(topPanel);
+
+        JPanel bottomPanel = new JPanel();
+        bottomPanel.setLayout(new BoxLayout(bottomPanel, BoxLayout.X_AXIS));
+
+        JPanel bottomRightPanel = new JPanel();
+        bottomRightPanel.setLayout(new FlowLayout(FlowLayout.RIGHT));
+        JPanel bottomLeftPanel = new JPanel();
+        bottomLeftPanel.setLayout(new FlowLayout(FlowLayout.CENTER));
+
         JButton saveButton = new JButton("Save");
         JButton deleteButton = new JButton("Delete");
-        JButton cancelButton2 = new JButton("Cancel");
-        JButton addButton = new JButton("Add");
+        JButton cancelButton2 = new JButton("Exit");
+        JButton addButton = new JButton("Add definition row");
+
+        bottomLeftPanel.add(addButton);
+
+        bottomRightPanel.add(saveButton);
+        bottomRightPanel.add(deleteButton);
+        bottomRightPanel.add(cancelButton2);
+
+        bottomPanel.add(bottomLeftPanel);
+        bottomPanel.add(bottomRightPanel);
+
+        wrapperPanel.add(bottomPanel);
 
         scrollPane.setViewportView(definitionField);
 
@@ -252,7 +303,6 @@ public class GUI {
         for (String definition : node.definitions) {
             model.addRow(new Object[]{definition, "-"});
         }
-
 
         // implements the interface https://tips4java.wordpress.com/2009/07/12/table-button-column/
         // or just override the default thing
@@ -299,7 +349,31 @@ public class GUI {
 
             }
         });
+        //https://stackoverflow.com/a/29743335
+        wordField.getDocument().addDocumentListener(new javax.swing.event.DocumentListener() {
+            public void changedUpdate(javax.swing.event.DocumentEvent evt) {
+                event();
+            }
 
+            public void removeUpdate(javax.swing.event.DocumentEvent evt) {
+                event();
+            }
+
+            public void insertUpdate(javax.swing.event.DocumentEvent evt) {
+                event();
+            }
+
+            public void event() {
+                TrieNode existing = dict.get(wordField.getText());
+                if (existing == null) {
+                    return;
+                }
+                model.setRowCount(0);
+                for (String definition : existing.definitions) {
+                    model.addRow(new Object[]{definition});
+                }
+            }
+        });
         saveButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 try {
@@ -325,34 +399,50 @@ public class GUI {
                 }
                 int merge = 0;
                 TrieNode dictNode = dict.get(word);
-                if (dictNode == node) { // if the word is not changed, changes are made only to the definition
-                    node.definitions.clear();
-                    node.definitions = new ArrayList<>();
-                    for (int i = 0; i < definitionField.getRowCount(); i++) {
-                        node.definitions.add(definitionField.getValueAt(i, 0).toString().trim());
-                        if (node.definitions.getLast() == null || node.definitions.getLast().isBlank()) {
-                            node.definitions.removeLast();
-                        }
-                    }
-                    return;
-                }
-                if (dictNode != null && dictNode.isEndOfWord) {
-                    Object[] options = {"Append", "Overwrite", "Cancel"};
-                    merge = JOptionPane.showOptionDialog(null, "Word already exists, do you want to overwrite or append the definition?", "Warning", JOptionPane.DEFAULT_OPTION, JOptionPane.WARNING_MESSAGE, null, options, options[0]);
-                    if (merge == 2) {
-                        return;
-                    }
-                }
-
-                dict.edit(node, wordField.getText().toUpperCase(), definitions, merge == 0);
+//                if (dictNode == node) { // if the word is not changed, changes are made only to the definition
+//                    node.definitions.clear();
+//                    node.definitions = new ArrayList<>();
+//                    for (int i = 0; i < definitionField.getRowCount(); i++) {
+//                        node.definitions.add(definitionField.getValueAt(i, 0).toString().trim());
+//                        if (node.definitions.getLast() == null || node.definitions.getLast().isBlank()) {
+//                            node.definitions.removeLast();
+//                        }
+//                    }
+//                } else
+//                if (dictNode != null && dictNode.isEndOfWord) {
+//                    Object[] options = {"Append", "Overwrite", "Cancel"};
+//                    merge = JOptionPane.showOptionDialog(null, "Word already exists, do you want to overwrite or append the definition?", "Warning", JOptionPane.DEFAULT_OPTION, JOptionPane.WARNING_MESSAGE, null, options, options[0]);
+//                    if (merge == 2) {
+//                        return;
+//                    }
+//                }
+                System.out.println(dictNode.word);
+                dict.edit(node, wordField.getText().toUpperCase(), definitions);
+                dict.save();
             }
         });
 
         deleteButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
+                int result = JOptionPane.showConfirmDialog(null, "Are you sure you want to delete this word?", "Warning", JOptionPane.YES_NO_OPTION);
+                if (result != JOptionPane.YES_OPTION) {
+                    return;
+                }
                 dict.delete(node);
+                dict.save();
                 JOptionPane.showMessageDialog(null, "Word deleted");
-                editorFrame.setVisible(false);
+                editorFrame.dispose();
+
+//                splitPane.setRightComponent(new JPanel());
+//                splitPane.setDividerLocation(splitPane.getDividerLocation());
+                setDetailsFrame(null);
+
+            }
+        });
+
+        cancelButton2.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                editorFrame.dispose();
             }
         });
 
@@ -362,19 +452,12 @@ public class GUI {
             }
         });
 
-
-        wrapperPanel.add(wordField);
-        wrapperPanel.add(scrollPane);
-        wrapperPanel.add(saveButton);
-        wrapperPanel.add(deleteButton);
-        wrapperPanel.add(cancelButton2);
-        wrapperPanel.add(addButton);
-        wrapperPanel.setAlignmentX(Component.CENTER_ALIGNMENT);
-
-
         frame.add(wrapperPanel);
         frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+        frame.revalidate();
+        frame.repaint();
         frame.pack();
+        frame.setVisible(true);
 
         return frame;
     }
@@ -433,15 +516,6 @@ public class GUI {
         bottomPanel.add(nextButton);
         panel.add(bottomPanel);
         return panel;
-//
-////        pressing enter on the frame will trigger the button
-//        frame.getRootPane().setDefaultButton(nextButton);
-//
-//
-//        frame.add(panel);
-//        frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-//        frame.pack();
-//        frame.setVisible(true);
     }
 
     private static JPanel questionPanel(boolean word) {
@@ -512,7 +586,13 @@ public class GUI {
 
     public static void main(String[] args) {
         javax.swing.SwingUtilities.invokeLater(() -> {
-            dict = new Dictionary("slang.txt");
+            try {
+                dict = new Dictionary("slang.txt", false);
+            } catch (Exception e) {
+                System.out.println("Error loading dictionary, reloading...");
+                dict = new Dictionary("slang.txt", true);
+            }
+            List<TrieNode> nodes = dict.getFromPrefix("");
             createAndShowGUI();
         });
     }

@@ -8,47 +8,128 @@ public class Dictionary extends Trie implements Serializable {
     @Serial
     private static final long serialVersionUID = 42L;
 
-    public Dictionary(String filename) {
+    public Dictionary(String original, boolean fromOriginal) {
         super();
         history = new ArrayList<>();
         List<String> cache = new ArrayList<>();
         invertedIndex = new HashMap<>();
-        try {
-            BufferedReader br = new BufferedReader(new FileReader(filename));
-            String line;
-            while ((line = br.readLine()) != null) {
-                try {
-                    StringBuilder formatted;
+        BufferedReader br;
+        if (!fromOriginal) {
+            try {
+                br = new BufferedReader(new FileReader("slangdb"));
+                String line;
+                if (!br.readLine().equals("#without-regex")) {
+                    throw new IOException("Invalid file format");
+                } else {
+                    br.readLine();
+                }
+                while ((line = br.readLine()) != null) {
+                    if (line.equals("Inverted Index")) {
+                        break;
+                    }
+                    try {
+                        String[] parts = line.split("`");
+                        String word = parts[0];
+                        String[] definitions = parts[1].split("\\|");
+                        insert(word, Arrays.asList(definitions));
+                    } catch (ArrayIndexOutOfBoundsException e) {
+                        System.out.println(line);
+                    }
+                }
+                List<TrieNode> a = getFromPrefix("");
+                while ((line = br.readLine()) != null) {
+                    if (line.equals("History")) {
+                        break;
+                    }
+//                    System.out.println(line);
                     String[] parts = line.split("`");
-                    String word = parts[0].trim();
-                    String[] definitions = parts[1].trim().split("\\|\s*");
-                    TrieNode node = insert(word, Arrays.asList(definitions));
-                    formatted = new StringBuilder(word + "`" + String.join("|", definitions));
-                    for (String definition : definitions) {
-                        String[] words = definition.replaceAll("[^a-zA-Z\\d']", " ").toLowerCase().split("\\s+");
-                        formatted.append("`").append(String.join(" ", words));
-                        for (String w : words) {
-                            if (!invertedIndex.containsKey(w)) {
-                                invertedIndex.put(w, new HashSet<>());
-                            }
-                            invertedIndex.get(w).add(node);
+                    String key = parts[0];
+                    if(key.isBlank() || parts.length < 2) {
+                        // balls`
+                        continue;
+                    }
+                    String[] words = parts[1].split("\\|");
+                    HashSet<TrieNode> nodes = new HashSet<>();
+                    for (String word : words) {
+                        TrieNode node = get(word);
+                        if (node != null) {
+                            nodes.add(node);
                         }
                     }
-                    cache.add(formatted.toString());
-                } catch (ArrayIndexOutOfBoundsException e) {
-                    System.out.println(line);
+                    invertedIndex.put(key, nodes);
                 }
+                while ((line = br.readLine()) != null) {
+                    TrieNode node = get(line);
+                    if (node != null) {
+                        history.add(node);
+                    }
+                }
+                br.close();
+            } catch (IOException e) {
+                System.err.println(e.getMessage());
+                System.err.println("Creating new database");
+                fromOriginal = true;
             }
-            br.close();
-        } catch (IOException e) {
-            System.err.println(e.getMessage());
         }
-//        super.setCache(cache);
+        if (fromOriginal) {
+            try {
+                br = new BufferedReader(new FileReader(original));
+                String line;
+                while ((line = br.readLine()) != null) {
+                    try {
+                        StringBuilder formatted;
+                        String[] parts = line.split("`");
+                        String word = parts[0].trim();
+                        String[] definitions = parts[1].trim().split("\\|\s*");
+                        TrieNode node = insert(word, Arrays.asList(definitions));
+                        formatted = new StringBuilder(word + "`" + String.join("|", definitions));
+                        for (String definition : definitions) {
+                            String[] words = definition.replaceAll("[^a-zA-Z\\d']", " ").toLowerCase().split("\\s+");
+                            formatted.append("`").append(String.join(" ", words));
+                            for (String w : words) {
+                                if (!invertedIndex.containsKey(w)) {
+                                    invertedIndex.put(w, new HashSet<>());
+                                }
+                                invertedIndex.get(w).add(node);
+                            }
+                        }
+                        cache.add(formatted.toString());
+                    } catch (ArrayIndexOutOfBoundsException e) {
+                        System.out.println(line);
+                    }
+                }
+                br.close();
+            } catch (IOException e) {
+                System.err.println(e.getMessage());
+            }
+        }
+    }
+
+    public void save() {
+        try {
+            FileWriter fw = new FileWriter("slangdb");
+            fw.write("#without-regex\n");
+            fw.write("Dictionary\n");
+            for (TrieNode node : listAll()) {
+                fw.write(node.toString() + "\n");
+            }
+            fw.write("Inverted Index\n");
+            for (String word : invertedIndex.keySet()) {
+                fw.write(word + "`" + String.join("|", invertedIndex.get(word).stream().map(n -> n.word).toList()) + "\n");
+            }
+            fw.write("History\n");
+            for (TrieNode node : history) {
+                fw.write(node.word + "\n");
+            }
+            fw.close();
+        } catch (IOException i) {
+            System.err.println(i.getMessage());
+        }
     }
 
     public TrieNode insert(String word, String[] definition) {
         word = word.trim();
-        if(word.isBlank()) {
+        if (word.isBlank()) {
             return null;
         }
         TrieNode node = super.insert(word, List.of(definition));
@@ -70,28 +151,26 @@ public class Dictionary extends Trie implements Serializable {
         if (node == null) {
             return false;
         }
-        for (String w : node.definitions) {
-            try {
+        for (String definition : node.definitions) {
+            String[] words = definition.replaceAll("[^a-zA-Z\\d']", " ").toLowerCase().split("\\s+");
+            for (String w : words) {
                 invertedIndex.get(w).remove(node);
-            } catch (NullPointerException e) {
+                if(invertedIndex.get(w).isEmpty()) {
+                    invertedIndex.remove(w);
+                }
                 System.out.println(w);
             }
         }
         return super.delete(node);
     }
 
-    public TrieNode edit(TrieNode node, String newWord, List<String> newDefinition, boolean merge) {
+    public TrieNode edit(TrieNode node, String newWord, List<String> newDefinition) {
         if (node == null) {
             return null;
         }
-        for (String w : node.definitions) {
-            try {
-                invertedIndex.get(w).remove(node);
-            } catch (NullPointerException e) {
-                System.out.println(w);
-            }
-        }
-        TrieNode newNode = super.edit(node, newWord, newDefinition, merge);
+        delete(node);
+
+        TrieNode newNode = insert(newWord, newDefinition);
         for (String w : newDefinition) {
             String[] words = w.replaceAll("[^a-zA-Z\\d']", " ").toLowerCase().split("\\s+");
             for (String word1 : words) {
@@ -105,7 +184,7 @@ public class Dictionary extends Trie implements Serializable {
     }
 
     private List<TrieNode> listAll() {
-        return new ArrayList<>(invertedIndex.values()).stream().flatMap(Collection::stream).toList();
+        return getFromPrefix("");
     }
 
     public List<TrieNode> getFromDefinition(String keyWords) {
@@ -148,13 +227,6 @@ public class Dictionary extends Trie implements Serializable {
         return List.of(nodes.toArray(new TrieNode[0]));
     }
 
-    public static void main(String[] args) {
-        Dictionary dict = new Dictionary("slang.txt");
-        List<TrieNode> list = dict.getFromDefinition("");
-        for (TrieNode node : list) {
-            System.out.println(node);
-        }
-    }
 }
 
 
