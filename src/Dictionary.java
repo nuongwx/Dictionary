@@ -1,3 +1,5 @@
+package src;
+
 import java.io.*;
 import java.util.*;
 
@@ -109,7 +111,7 @@ public class Dictionary extends Trie implements Serializable {
         try {
             FileWriter fw = new FileWriter("slangdb");
             fw.write("#without-regex\n");
-            fw.write("Dictionary\n");
+            fw.write("src.Dictionary\n");
             for (TrieNode node : listAll()) {
                 fw.write(node.toString() + "\n");
             }

@@ -1,3 +1,5 @@
+package src;
+
 import javax.swing.*;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
@@ -399,24 +401,6 @@ public class GUI {
                 }
                 int merge = 0;
                 TrieNode dictNode = dict.get(word);
-//                if (dictNode == node) { // if the word is not changed, changes are made only to the definition
-//                    node.definitions.clear();
-//                    node.definitions = new ArrayList<>();
-//                    for (int i = 0; i < definitionField.getRowCount(); i++) {
-//                        node.definitions.add(definitionField.getValueAt(i, 0).toString().trim());
-//                        if (node.definitions.getLast() == null || node.definitions.getLast().isBlank()) {
-//                            node.definitions.removeLast();
-//                        }
-//                    }
-//                } else
-//                if (dictNode != null && dictNode.isEndOfWord) {
-//                    Object[] options = {"Append", "Overwrite", "Cancel"};
-//                    merge = JOptionPane.showOptionDialog(null, "Word already exists, do you want to overwrite or append the definition?", "Warning", JOptionPane.DEFAULT_OPTION, JOptionPane.WARNING_MESSAGE, null, options, options[0]);
-//                    if (merge == 2) {
-//                        return;
-//                    }
-//                }
-                System.out.println(dictNode.word);
                 dict.edit(node, wordField.getText().toUpperCase(), definitions);
                 dict.save();
             }
@@ -432,9 +416,6 @@ public class GUI {
                 dict.save();
                 JOptionPane.showMessageDialog(null, "Word deleted");
                 editorFrame.dispose();
-
-//                splitPane.setRightComponent(new JPanel());
-//                splitPane.setDividerLocation(splitPane.getDividerLocation());
                 setDetailsFrame(null);
 
             }
@@ -592,7 +573,7 @@ public class GUI {
                 System.out.println("Error loading dictionary, reloading...");
                 dict = new Dictionary("slang.txt", true);
             }
-            List<TrieNode> nodes = dict.getFromPrefix("");
+            dict.save();
             createAndShowGUI();
         });
     }

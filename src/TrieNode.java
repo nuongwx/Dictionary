@@ -1,3 +1,5 @@
+package src;
+
 import java.util.*;
 import java.io.*;
 
@@ -9,7 +11,6 @@ public class TrieNode implements Serializable {
 
     String word;
 
-//    String word;
 
     public TrieNode() {
         children = new HashMap<Character, TrieNode>();
