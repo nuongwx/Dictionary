@@ -6,7 +6,7 @@ import java.awt.*;
 public class ListRenderer extends JLabel implements ListCellRenderer<TrieNode> {
     public Component getListCellRendererComponent(JList<? extends TrieNode> list, TrieNode value, int index, boolean isSelected, boolean cellHasFocus) {
         DefaultListModel model = (DefaultListModel) list.getModel();
-        if(!value.isEndOfWord) {
+        if (!value.isEndOfWord) {
             model.remove(index);
             return null;
         }

@@ -5,7 +5,6 @@ import java.util.*;
 
 public class Dictionary extends Trie implements Serializable {
     HashMap<String, HashSet<TrieNode>> invertedIndex;
-
     List<TrieNode> history;
     @Serial
     private static final long serialVersionUID = 42L;
@@ -38,7 +37,6 @@ public class Dictionary extends Trie implements Serializable {
                         System.out.println(line);
                     }
                 }
-                List<TrieNode> a = getFromPrefix("");
                 while ((line = br.readLine()) != null) {
                     if (line.equals("History")) {
                         break;
@@ -82,7 +80,7 @@ public class Dictionary extends Trie implements Serializable {
                         StringBuilder formatted;
                         String[] parts = line.split("`");
                         String word = parts[0].trim();
-                        String[] definitions = parts[1].trim().split("\\|\s*");
+                        String[] definitions = parts[1].trim().split("\\| *");
                         TrieNode node = insert(word, Arrays.asList(definitions));
                         formatted = new StringBuilder(word + "`" + String.join("|", definitions));
                         for (String definition : definitions) {
@@ -105,6 +103,7 @@ public class Dictionary extends Trie implements Serializable {
                 System.err.println(e.getMessage());
             }
         }
+
     }
 
     public void save() {
@@ -150,7 +149,7 @@ public class Dictionary extends Trie implements Serializable {
     }
 
     public boolean delete(TrieNode node) {
-        if (node == null) {
+        if (node == null || node.isEndOfWord == false) {
             return false;
         }
         for (String definition : node.definitions) {
@@ -163,6 +162,7 @@ public class Dictionary extends Trie implements Serializable {
                 System.out.println(w);
             }
         }
+        history.remove(node);
         return super.delete(node);
     }
 
@@ -213,7 +213,7 @@ public class Dictionary extends Trie implements Serializable {
     public TrieNode motd() {
         Random rand = new Random();
         List<String> keys = new ArrayList<>(invertedIndex.keySet());
-        if(keys.isEmpty()) {
+        if (keys.isEmpty()) {
             return null;
         }
         String randomKey = keys.get(rand.nextInt(keys.size()));
@@ -223,14 +223,9 @@ public class Dictionary extends Trie implements Serializable {
 
     public List<TrieNode> quiz() {
         HashSet<TrieNode> nodes = new HashSet<>();
-        if(invertedIndex.isEmpty()) {
-            return null;
-        }
-        int min = 4;
-        for(HashSet<TrieNode> set : invertedIndex.values()) {
-            if(set.size() < min) {
-                min = set.size();
-            }
+        int min = Math.min(4, size);
+        if(min == 0) {
+            return List.of();
         }
         while (nodes.size() < min) {
             nodes.add(motd());

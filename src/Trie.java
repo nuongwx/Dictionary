@@ -5,6 +5,7 @@ import java.util.*;
 
 public class Trie implements Serializable {
     TrieNode root;
+    Integer size = 0;
 
     public Trie() {
         root = new TrieNode();
@@ -25,6 +26,7 @@ public class Trie implements Serializable {
         current.isEndOfWord = true;
         current.addDefinition(definition);
         current.setWord(word);
+        size++;
         return current;
     }
 
@@ -34,10 +36,12 @@ public class Trie implements Serializable {
         }
         node.isEndOfWord = false;
         node.definitions.clear();
+        size--;
         return true;
     }
 
-    public void save() {}
+    public void save() {
+    }
 
     public List<TrieNode> getFromPrefix(String prefix) {
         TrieNode current = root;

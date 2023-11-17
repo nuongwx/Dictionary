@@ -215,7 +215,7 @@ public class GUI {
         } else {
             detailsFrame.removeAll();
         }
-        if(node == null) {
+        if (node == null) {
             return detailsFrame;
         }
 
@@ -506,7 +506,7 @@ public class GUI {
         JPanel questionPanel = new JPanel();
 
         List<TrieNode> nodes = dict.quiz();
-        if(nodes == null) {
+        if (nodes.isEmpty()) {
             questionPanel.add(new JLabel("No words in dictionary"));
             return questionPanel;
         }
