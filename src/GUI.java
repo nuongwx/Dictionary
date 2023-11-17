@@ -215,6 +215,9 @@ public class GUI {
         } else {
             detailsFrame.removeAll();
         }
+        if(node == null) {
+            return detailsFrame;
+        }
 
         JPanel wrapperPanel = new JPanel();
         wrapperPanel.setLayout(new BoxLayout(wrapperPanel, BoxLayout.Y_AXIS));
@@ -503,6 +506,10 @@ public class GUI {
         JPanel questionPanel = new JPanel();
 
         List<TrieNode> nodes = dict.quiz();
+        if(nodes == null) {
+            questionPanel.add(new JLabel("No words in dictionary"));
+            return questionPanel;
+        }
         TrieNode ans = nodes.get(new Random().nextInt(nodes.size()));
 
         JLabel question;

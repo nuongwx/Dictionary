@@ -46,7 +46,7 @@ public class Dictionary extends Trie implements Serializable {
 //                    System.out.println(line);
                     String[] parts = line.split("`");
                     String key = parts[0];
-                    if(key.isBlank() || parts.length < 2) {
+                    if (key.isBlank() || parts.length < 2) {
                         // balls`
                         continue;
                     }
@@ -111,7 +111,7 @@ public class Dictionary extends Trie implements Serializable {
         try {
             FileWriter fw = new FileWriter("slangdb");
             fw.write("#without-regex\n");
-            fw.write("src.Dictionary\n");
+            fw.write("Dictionary\n");
             for (TrieNode node : listAll()) {
                 fw.write(node.toString() + "\n");
             }
@@ -157,7 +157,7 @@ public class Dictionary extends Trie implements Serializable {
             String[] words = definition.replaceAll("[^a-zA-Z\\d']", " ").toLowerCase().split("\\s+");
             for (String w : words) {
                 invertedIndex.get(w).remove(node);
-                if(invertedIndex.get(w).isEmpty()) {
+                if (invertedIndex.get(w).isEmpty()) {
                     invertedIndex.remove(w);
                 }
                 System.out.println(w);
@@ -167,9 +167,6 @@ public class Dictionary extends Trie implements Serializable {
     }
 
     public TrieNode edit(TrieNode node, String newWord, List<String> newDefinition) {
-        if (node == null) {
-            return null;
-        }
         delete(node);
 
         TrieNode newNode = insert(newWord, newDefinition);
@@ -216,6 +213,9 @@ public class Dictionary extends Trie implements Serializable {
     public TrieNode motd() {
         Random rand = new Random();
         List<String> keys = new ArrayList<>(invertedIndex.keySet());
+        if(keys.isEmpty()) {
+            return null;
+        }
         String randomKey = keys.get(rand.nextInt(keys.size()));
         List<TrieNode> nodes = invertedIndex.get(randomKey).stream().toList();
         return nodes.get(rand.nextInt(nodes.size()));
@@ -223,7 +223,16 @@ public class Dictionary extends Trie implements Serializable {
 
     public List<TrieNode> quiz() {
         HashSet<TrieNode> nodes = new HashSet<>();
-        while (nodes.size() < 4) {
+        if(invertedIndex.isEmpty()) {
+            return null;
+        }
+        int min = 4;
+        for(HashSet<TrieNode> set : invertedIndex.values()) {
+            if(set.size() < min) {
+                min = set.size();
+            }
+        }
+        while (nodes.size() < min) {
             nodes.add(motd());
         }
         return List.of(nodes.toArray(new TrieNode[0]));
