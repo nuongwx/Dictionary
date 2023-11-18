@@ -60,7 +60,7 @@ public class Dictionary extends Trie implements Serializable {
                 }
                 while ((line = br.readLine()) != null) {
                     TrieNode node = get(line);
-                    if (node != null) {
+                    if (node != null && node.isEndOfWord) {
                         history.add(node);
                     }
                 }
@@ -162,7 +162,7 @@ public class Dictionary extends Trie implements Serializable {
                 System.out.println(w);
             }
         }
-        history.remove(node);
+//        history.remove(node);
         return super.delete(node);
     }
 
@@ -224,7 +224,7 @@ public class Dictionary extends Trie implements Serializable {
     public List<TrieNode> quiz() {
         HashSet<TrieNode> nodes = new HashSet<>();
         int min = Math.min(4, size);
-        if(min == 0) {
+        if (min == 0) {
             return List.of();
         }
         while (nodes.size() < min) {

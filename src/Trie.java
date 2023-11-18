@@ -35,7 +35,6 @@ public class Trie implements Serializable {
             return false;
         }
         node.isEndOfWord = false;
-        node.definitions.clear();
         size--;
         return true;
     }
