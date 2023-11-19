@@ -8,18 +8,10 @@ public class DbManagementPanel extends JPanel {
 
         JButton reloadButton = new JButton("Reload");
         add(reloadButton);
-        reloadButton.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                GUI.reload();
-            }
-        });
+        reloadButton.addActionListener(evt -> GUI.reload());
 
         JButton saveButton = new JButton("Save");
         add(saveButton);
-        saveButton.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                GUI.dict.save();
-            }
-        });
+        saveButton.addActionListener(evt -> GUI.dict.save());
     }
 }

@@ -34,7 +34,7 @@ public class Dictionary extends Trie implements Serializable {
                         String[] definitions = parts[1].split("\\|");
                         insert(word, Arrays.asList(definitions));
                     } catch (ArrayIndexOutOfBoundsException e) {
-                        System.out.println(line);
+                        System.err.println(line);
                     }
                 }
                 while ((line = br.readLine()) != null) {
@@ -75,8 +75,10 @@ public class Dictionary extends Trie implements Serializable {
             try {
                 br = new BufferedReader(new FileReader(original));
                 String line;
+                int c = 0;
                 while ((line = br.readLine()) != null) {
                     try {
+                        c++;
                         StringBuilder formatted;
                         String[] parts = line.split("`");
                         String word = parts[0].trim();
@@ -95,10 +97,13 @@ public class Dictionary extends Trie implements Serializable {
                         }
                         cache.add(formatted.toString());
                     } catch (ArrayIndexOutOfBoundsException e) {
-                        System.out.println(line);
+                        System.err.println(line);
                     }
                 }
                 br.close();
+                System.out.println("Read " + c + " lines");
+                System.out.println("Called insertion (valid entry): " + size + " times");
+                System.out.println("Real dictionary size: " + listAll().size() + " entries");
             } catch (IOException e) {
                 System.err.println(e.getMessage());
             }
@@ -149,7 +154,7 @@ public class Dictionary extends Trie implements Serializable {
     }
 
     public boolean delete(TrieNode node) {
-        if (node == null || node.isEndOfWord == false) {
+        if (node == null || !node.isEndOfWord) {
             return false;
         }
         for (String definition : node.definitions) {
@@ -159,10 +164,9 @@ public class Dictionary extends Trie implements Serializable {
                 if (invertedIndex.get(w).isEmpty()) {
                     invertedIndex.remove(w);
                 }
-                System.out.println(w);
             }
         }
-//        history.remove(node);
+        history.remove(node);
         return super.delete(node);
     }
 

@@ -19,9 +19,11 @@ public class Trie implements Serializable {
             if (node == null) {
                 node = new TrieNode(current);
                 current.children.put(ch, node);
-            } else {
             }
             current = node;
+        }
+        if (current.isEndOfWord) {
+            // well, this is awkward
         }
         current.isEndOfWord = true;
         current.addDefinition(definition);
@@ -35,6 +37,7 @@ public class Trie implements Serializable {
             return false;
         }
         node.isEndOfWord = false;
+        node.definitions.clear();
         size--;
         return true;
     }

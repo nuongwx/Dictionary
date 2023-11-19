@@ -45,18 +45,14 @@ public class SearchPanel extends JPanel {
         revalidate();
         repaint();
 
-        addButton.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                TrieNode node = new TrieNode();
-                EditorFrame editorFrame = new EditorFrame(node);
-            }
+        addButton.addActionListener(evt -> {
+            TrieNode node = new TrieNode();
+            new EditorFrame(node);
         });
 
-        comboBox.addItemListener(new java.awt.event.ItemListener() {
-            public void itemStateChanged(java.awt.event.ItemEvent evt) {
-                listModel.clear();
-                listModel.addAll(List.of(getSearchResult(comboBox, textField)));
-            }
+        comboBox.addItemListener(evt -> {
+            listModel.clear();
+            listModel.addAll(List.of(getSearchResult(comboBox, textField)));
         });
 
         textField.addKeyListener(new java.awt.event.KeyAdapter() {
@@ -68,7 +64,7 @@ public class SearchPanel extends JPanel {
 
         list.addMouseListener(new java.awt.event.MouseAdapter() {
             int evtClickCount = 0;
-            java.util.Timer timer = new java.util.Timer();
+            final java.util.Timer timer = new java.util.Timer();
 
             @Override
             public void mouseReleased(MouseEvent e) {
@@ -80,29 +76,26 @@ public class SearchPanel extends JPanel {
                         @Override
                         public void run() {
                             if (evtClickCount == 1) {
-                                singleClick(e);
+                                singleClick();
                             } else {
-                                doubleClick(e);
+                                doubleClick();
                             }
                             evtClickCount = 0;
                         }
-                    }, 150);
+                    }, 250);
                 }
             }
 
-            public void singleClick(MouseEvent e) {
+            public void singleClick() {
                 TrieNode node = list.getSelectedValue();
-                System.out.println(node.word);
                 GUI.dict.history.addFirst(node);
                 HistoryPanel.update();
                 DetailsPanel.update(node);
-                GUI.searchDetailsSplitPane.revalidate();
-                GUI.searchDetailsSplitPane.repaint();
             }
 
-            public void doubleClick(MouseEvent e) {
+            public void doubleClick() {
                 TrieNode node = list.getSelectedValue();
-                EditorFrame editorFrame = new EditorFrame(node);
+                new EditorFrame(node);
             }
         });
     }

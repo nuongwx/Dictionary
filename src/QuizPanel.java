@@ -30,34 +30,24 @@ public class QuizPanel extends JPanel {
         bottomPanel.add(nextButton);
         add(bottomPanel);
 
-        wordButton.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-//                removeAll();
-//                add(new QuizPanel(true));
-                questionWrapperPanel.removeAll();
-                questionWrapperPanel.add(new QuestionPanel(true));
-                revalidate();
-                repaint();
-            }
+        wordButton.addActionListener(evt -> {
+            questionWrapperPanel.removeAll();
+            questionWrapperPanel.add(new QuestionPanel(true));
+            revalidate();
+            repaint();
         });
 
-        definitionButton.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-//                removeAll();
-//                add(new QuizPanel(false));
-                questionWrapperPanel.removeAll();
-                questionWrapperPanel.add(new QuestionPanel(false));
-                revalidate();
-                repaint();
-            }
+        definitionButton.addActionListener(evt -> {
+            questionWrapperPanel.removeAll();
+            questionWrapperPanel.add(new QuestionPanel(false));
+            revalidate();
+            repaint();
         });
-        nextButton.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                questionWrapperPanel.removeAll();
-                questionWrapperPanel.add(new QuestionPanel(word));
-                questionWrapperPanel.revalidate();
-                questionWrapperPanel.repaint();
-            }
+        nextButton.addActionListener(evt -> {
+            questionWrapperPanel.removeAll();
+            questionWrapperPanel.add(new QuestionPanel(word));
+            questionWrapperPanel.revalidate();
+            questionWrapperPanel.repaint();
         });
 
     }

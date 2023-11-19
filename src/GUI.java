@@ -2,8 +2,6 @@ package src;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.awt.event.WindowEvent;
 
 public class GUI {
@@ -18,59 +16,41 @@ public class GUI {
 
         JToggleButton dictionaryBtn = new JToggleButton("Dictionary");
         dictionaryBtn.setModel(new DefaultButtonModel());
-        dictionaryBtn.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                int lastDividerLocation = 200;
-                if (searchHistorySplitPane != null && searchHistorySplitPane.getDividerLocation() != 200) {
-                    lastDividerLocation = searchHistorySplitPane.getDividerLocation();
-                }
-                searchHistorySplitPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT, new SearchPanel(), new HistoryPanel());
-                searchHistorySplitPane.setDividerLocation(lastDividerLocation);
-
-                lastDividerLocation = 400;
-                if (searchDetailsSplitPane != null && searchDetailsSplitPane.getDividerLocation() != 400) {
-                    lastDividerLocation = searchDetailsSplitPane.getDividerLocation();
-                }
-
-                searchDetailsSplitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, searchHistorySplitPane, new DetailsPanel());
-                searchDetailsSplitPane.setDividerLocation(lastDividerLocation);
-                searchDetailsSplitPane.setResizeWeight(0.5);
-                updateMainFrame(searchDetailsSplitPane);
+        dictionaryBtn.addActionListener(e -> {
+            int lastDividerLocation = 200;
+            if (searchHistorySplitPane != null && searchHistorySplitPane.getDividerLocation() != 200) {
+                lastDividerLocation = searchHistorySplitPane.getDividerLocation();
             }
+            searchHistorySplitPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT, new SearchPanel(), new HistoryPanel());
+            searchHistorySplitPane.setDividerLocation(lastDividerLocation);
+
+            lastDividerLocation = 400;
+            if (searchDetailsSplitPane != null && searchDetailsSplitPane.getDividerLocation() != 400) {
+                lastDividerLocation = searchDetailsSplitPane.getDividerLocation();
+            }
+
+            searchDetailsSplitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, searchHistorySplitPane, new DetailsPanel());
+            searchDetailsSplitPane.setDividerLocation(lastDividerLocation);
+            searchDetailsSplitPane.setResizeWeight(0.5);
+            updateMainFrame(searchDetailsSplitPane);
         });
         menuBar.add(dictionaryBtn);
 
         JToggleButton quizBtn = new JToggleButton("Quiz");
         quizBtn.setModel(new DefaultButtonModel());
-        quizBtn.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                updateMainFrame(new QuizPanel(true));
-            }
-        });
+        quizBtn.addActionListener(e -> updateMainFrame(new QuizPanel(true)));
         menuBar.add(quizBtn);
 
         JToggleButton manageBtn = new JToggleButton("Manage");
         manageBtn.setModel(new DefaultButtonModel());
-        manageBtn.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                updateMainFrame(new DbManagementPanel());
-            }
-        });
+        manageBtn.addActionListener(e -> updateMainFrame(new DbManagementPanel()));
         menuBar.add(manageBtn);
 
         menuBar.add(Box.createHorizontalGlue());
 
         JToggleButton homeBtn = new JToggleButton("Home");
         homeBtn.setModel(new DefaultButtonModel());
-        homeBtn.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                updateMainFrame(new Motd());
-            }
-        });
+        homeBtn.addActionListener(e -> updateMainFrame(new Motd()));
         homeBtn.setComponentOrientation(ComponentOrientation.RIGHT_TO_LEFT);
         menuBar.add(homeBtn);
 

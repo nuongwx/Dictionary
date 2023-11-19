@@ -38,28 +38,20 @@ public class QuestionPanel extends JPanel {
             button.setAlignmentX(CENTER_ALIGNMENT);
             button.setPreferredSize(new Dimension(400, 100));
 
-            button.addActionListener(new java.awt.event.ActionListener() {
-                public void actionPerformed(java.awt.event.ActionEvent evt) {
-                    JButton clickedButton = (JButton) evt.getSource();
-                    if (node == ans) {
-                        clickedButton.setBackground(java.awt.Color.GREEN);
-                        for (Component iiterButton : buttonPanel.getComponents()) {
-                            iiterButton.setEnabled(false);
-                        }
-                    } else {
-                        clickedButton.setBackground(java.awt.Color.RED);
+            button.addActionListener(evt -> {
+                JButton clickedButton = (JButton) evt.getSource();
+                if (node == ans) {
+                    clickedButton.setBackground(Color.GREEN);
+                    for (Component iiterButton : buttonPanel.getComponents()) {
+                        iiterButton.setEnabled(false);
                     }
-                    clickedButton.setEnabled(false);
+                } else {
+                    clickedButton.setBackground(Color.RED);
                 }
+                clickedButton.setEnabled(false);
             });
             buttonPanel.add(button);
         }
-
-//        JPanel wrapperPanel = new JPanel();
-//        wrapperPanel.setLayout(new BoxLayout(wrapperPanel, BoxLayout.Y_AXIS));
-//        wrapperPanel.add(this);
-//        wrapperPanel.add(buttonPanel);
-
         add(buttonPanel);
     }
 }

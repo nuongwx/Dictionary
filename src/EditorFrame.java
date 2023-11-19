@@ -75,12 +75,10 @@ public class EditorFrame extends JFrame {
             public Component getTableCellEditorComponent(JTable table, Object value, boolean isSelected, int row, int column) {
                 if (column == 1) {
                     JButton button = new JButton("✘");
-                    button.addActionListener(new java.awt.event.ActionListener() {
-                        public void actionPerformed(java.awt.event.ActionEvent evt) {
-                            // https://stackoverflow.com/a/34158450
-                            definitionField.getCellEditor().stopCellEditing();
-                            model.removeRow(row);
-                        }
+                    button.addActionListener(evt -> {
+                        // https://stackoverflow.com/a/34158450
+                        definitionField.getCellEditor().stopCellEditing();
+                        model.removeRow(row);
                     });
                     return button;
                 } else {
@@ -88,18 +86,16 @@ public class EditorFrame extends JFrame {
                 }
             }
         });
-        wordField.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                TrieNode existing = GUI.dict.get(wordField.getText());
-                if (existing == null) {
-                    return;
-                }
-                model.setRowCount(0);
-                for (String definition : existing.definitions) {
-                    model.addRow(new Object[]{definition});
-                }
-
+        wordField.addActionListener(evt -> {
+            TrieNode existing = GUI.dict.get(wordField.getText());
+            if (existing == null) {
+                return;
             }
+            model.setRowCount(0);
+            for (String definition : existing.definitions) {
+                model.addRow(new Object[]{definition});
+            }
+
         });
         wordField.getDocument().addDocumentListener(new javax.swing.event.DocumentListener() {
             public void changedUpdate(javax.swing.event.DocumentEvent evt) {
@@ -125,59 +121,46 @@ public class EditorFrame extends JFrame {
                 }
             }
         });
-        saveButton.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                try {
-                    definitionField.getCellEditor().stopCellEditing();
-                } catch (NullPointerException e) {
-                    // do nothing
-                }
-                String word = wordField.getText();
-                if (word.isBlank()) {
-                    JOptionPane.showMessageDialog(null, "Word cannot be blank");
-                    return;
-                }
-                ArrayList<String> definitions = new ArrayList<>();
-                for (int i = 0; i < definitionField.getRowCount(); i++) {
-                    definitions.add(definitionField.getValueAt(i, 0).toString().trim());
-                    if (definitions.getLast() == null || definitions.getLast().isBlank()) {
-                        definitions.removeLast();
-                    }
-                }
-                if (definitions.isEmpty()) {
-                    JOptionPane.showMessageDialog(null, "Definition cannot be blank");
-                    return;
-                }
-                int merge = 0;
-                TrieNode dictNode = GUI.dict.get(word);
-                GUI.dict.edit(node, wordField.getText().toUpperCase(), definitions);
-                GUI.dict.save();
+        saveButton.addActionListener(evt -> {
+            try {
+                definitionField.getCellEditor().stopCellEditing();
+            } catch (NullPointerException e) {
+                // do nothing
             }
-        });
-        deleteButton.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                int result = JOptionPane.showConfirmDialog(null, "Are you sure you want to delete this word?", "Warning", JOptionPane.YES_NO_OPTION);
-                if (result != JOptionPane.YES_OPTION) {
-                    return;
+            String word = wordField.getText();
+            if (word.isBlank()) {
+                JOptionPane.showMessageDialog(null, "Word cannot be blank");
+                return;
+            }
+            ArrayList<String> definitions = new ArrayList<>();
+            for (int i = 0; i < definitionField.getRowCount(); i++) {
+                definitions.add(definitionField.getValueAt(i, 0).toString().trim());
+                if (definitions.getLast() == null || definitions.getLast().isBlank()) {
+                    definitions.removeLast();
                 }
-                GUI.dict.delete(node);
-                GUI.dict.save();
-                JOptionPane.showMessageDialog(null, "Word deleted");
-                dispose();
+            }
+            if (definitions.isEmpty()) {
+                JOptionPane.showMessageDialog(null, "Definition cannot be blank");
+                return;
+            }
+//            TrieNode dictNode = GUI.dict.get(word);
+            GUI.dict.edit(node, wordField.getText().toUpperCase(), definitions);
+            GUI.dict.save();
+        });
+        deleteButton.addActionListener(evt -> {
+            int result = JOptionPane.showConfirmDialog(null, "Are you sure you want to delete this word?", "Warning", JOptionPane.YES_NO_OPTION);
+            if (result != JOptionPane.YES_OPTION) {
+                return;
+            }
+            GUI.dict.delete(node);
+            GUI.dict.save();
+            JOptionPane.showMessageDialog(null, "Word deleted");
+            dispose();
 //                setDetailsFrame(null);
 
-            }
         });
-        cancelButton2.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                dispose();
-            }
-        });
-        addButton.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                model.addRow(new Object[]{""});
-            }
-        });
+        cancelButton2.addActionListener(evt -> dispose());
+        addButton.addActionListener(evt -> model.addRow(new Object[]{""}));
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         revalidate();
         repaint();
